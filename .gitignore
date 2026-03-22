@@ -84,6 +84,7 @@ package-lock.json
 ehthumbs.db
 desktop.ini
 
+*.db
 *.bak
 *.old
 *.orig
