@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 import datetime
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy import create_engine, Column, Integer, Float, String, Date
@@ -11,6 +12,14 @@ import psutil
 app = FastAPI(
     title="Expense Tracker + Server Monitor",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 DATABASE_URL = "sqlite:///./expenses.db"
