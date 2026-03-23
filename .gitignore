@@ -84,6 +84,9 @@ package-lock.json
 ehthumbs.db
 desktop.ini
 
+caddy_data/
+caddy_config/
+
 *.db
 *.bak
 *.old
