@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expense Tracker VPS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#6366f1',
+            primarydark: '#4f46e5',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen font-sans antialiased">
+
+  <header class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-900">Expense Tracker <span class="text-primary">VPS</span></h1>
+      <span class="text-sm text-gray-500">Personal Finance</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+          <h2 class="text-xl font-semibold mb-4 text-gray-800">Новая трата</h2>
+          
+          <form id="expenseForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Сумма</label>
+              <input type="number" step="0.01" id="amount" required min="0.01"
+                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Категория</label>
+              <input type="text" id="category" required placeholder="Еда · Транспорт · Развлечения"
+                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Описание</label>
+              <input type="text" id="description" placeholder="Обед в кафе"
+                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2">
+            </div>
+            <button type="submit"
+                    class="w-full bg-primary hover:bg-primarydark text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 shadow-sm">
+              Добавить
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">Записи</h2>
+            <span id="totalAmount" class="text-lg font-bold text-green-600">0 ₽</span>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сумма</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категория</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                </tr>
+              </thead>
+              <tbody id="expensesList" class="bg-white divide-y divide-gray-200">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mt-8 bg-white rounded-xl shadow-md p-6 border border-gray-100">
+      <h2 class="text-xl font-semibold mb-4 text-gray-800">Состояние сервера</h2>
+      <div id="systemStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="mt-12 py-6 text-center text-gray-500 text-sm border-t">
+    Expense Tracker • 2026
+  </footer>
+
+  <script>
+    const API_BASE = '';
+
+    async function loadExpenses() {
+      try {
+        const res = await fetch(`${API_BASE}/expenses/`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const expenses = await res.json();
+        
+        const tbody = document.getElementById('expensesList');
+        tbody.innerHTML = '';
+        
+        let total = 0;
+        expenses.forEach(exp => {
+          total += exp.amount;
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-gray-50 transition-colors';
+          row.innerHTML = `
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${exp.date}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${exp.amount.toFixed(2)} ₽</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${exp.category}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">${exp.description || '—'}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        document.getElementById('totalAmount').textContent = `${total.toFixed(2)} ₽`;
+      } catch (err) {
+        console.error('Ошибка загрузки трат:', err);
+      }
+    }
+
+    async function loadSystemStats() {
+      try {
+        const res = await fetch(`${API_BASE}/system/`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        
+        const container = document.getElementById('systemStats');
+        container.innerHTML = `
+          <div class="bg-indigo-50 p-4 rounded-lg">
+            <div class="text-indigo-600 font-medium">CPU</div>
+            <div class="text-2xl font-bold">${data.cpu_percent}%</div>
+          </div>
+          <div class="bg-blue-50 p-4 rounded-lg">
+            <div class="text-blue-600 font-medium">Память</div>
+            <div class="text-2xl font-bold">${data.memory_percent}%</div>
+            <div class="text-xs text-gray-600">${data.memory_used_mb} / ${data.memory_total_mb} MB</div>
+          </div>
+          <div class="bg-green-50 p-4 rounded-lg">
+            <div class="text-green-600 font-medium">Диск</div>
+            <div class="text-2xl font-bold">${data.disk_percent}%</div>
+            <div class="text-xs text-gray-600">${data.disk_used_gb} / ${data.disk_total_gb} GB</div>
+          </div>
+          <div class="bg-purple-50 p-4 rounded-lg">
+            <div class="text-purple-600 font-medium">Сеть</div>
+            <div class="text-xl font-bold">${(data.bytes_sent_mb + data.bytes_recv_mb).toFixed(0)} MB</div>
+          </div>
+        `;
+      } catch (err) {
+        console.error('Ошибка загрузки статистики:', err);
+      }
+    }
+
+    document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value.trim();
+      const description = document.getElementById('description').value.trim();
+
+      if (!amount || !category) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/expenses/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, category, description })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        document.getElementById('amount').value = '';
+        document.getElementById('category').value = '';
+        document.getElementById('description').value = '';
+        
+        loadExpenses();
+      } catch (err) {
+        alert('Ошибка при добавлении: ' + err.message);
+      }
+    });
+
+    loadExpenses();
+    loadSystemStats();
+    setInterval(loadSystemStats, 30000);
+  </script>
+
+</body>
+</html>
