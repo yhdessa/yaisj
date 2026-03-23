@@ -1,86 +1,95 @@
-# yaisj
+# Expense Tracker VPS
 
-A simple, lightweight personal expense tracking web application.
+A simple, lightweight web application for tracking personal expenses with real-time server resource monitoring.
 
-Track your daily spending, categorize expenses, add descriptions, and see totals — all in a clean, modern interface.
+Record daily spending, categorize transactions, add notes, view totals, and keep an eye on your server's health — all in one modern interface.
 
 ## Features
 
-- Add new expenses with amount, category and optional description
-- View list of all recorded expenses
-- Automatic calculation of total spending
-- Real-time server resource overview (CPU, memory, disk, network usage)
-- Responsive design that works well on desktop and mobile
-- Dark/light mode support (via system preference)
-- Data stored locally in SQLite database
+- Add expenses with amount, category, and optional description
+- View complete list of recorded expenses
+- Automatic total spending calculation
+- Real-time server stats (CPU, memory, disk usage, network I/O, top processes)
+- Responsive design — works great on desktop and mobile
+- Clean, modern UI with Tailwind CSS
+- Data stored locally in SQLite
 
 ## Tech Stack
 
 - **Backend**: FastAPI (Python)
 - **Frontend**: HTML + Tailwind CSS + vanilla JavaScript
 - **Database**: SQLite
-- **Dependencies**: minimal — psutil, SQLAlchemy, Uvicorn
+- **Containerization**: Docker + docker-compose
+- **Reverse proxy & auto-HTTPS**: Caddy
+- **Monitoring**: psutil
 
-## Quick Start (Local Development)
+## Quick Start
 
-1. Clone the repository
+### Recommended: Run with Docker
 
 ```bash
+# 1. Clone the repository
 git clone https://github.com/yhdessa/yaisj.git
 cd yaisj
+
+# 2. Start the application (builds and runs in background)
+docker compose up -d --build
+
+# 3. Open in your browser
+http://localhost/
 ```
 
-2. Create and activate virtual environment
+- Main app: http://localhost/
+- API documentation (Swagger): http://localhost/docs
+
+### Alternative: Run locally without Docker
 
 ```bash
+# 1. Clone the repo
+git clone https://github.com/yhdessa/yaisj.git
+cd yaisj
+
+# 2. Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate    # on Windows: .venv\Scripts\activate
-```
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 
-3. Install dependencies
-
-```bash
+# 3. Install dependencies
 pip install -r requirements.txt
-```
 
-4. Run the application
-
-```bash
+# 4. Start the backend
 uvicorn app.main:app --reload --port 8000
+
+# 5. Open the frontend
+http://127.0.0.1:8000/static/index.html
+
+# API docs
+http://127.0.0.1:8000/docs
 ```
-
-5. Open in browser
-
-- Application: http://127.0.0.1:8000/static/index.html
-- API documentation: http://127.0.0.1:8000/docs
 
 ## Project Structure
 
 ```
 yaisj/
 ├── app/
-│   └── main.py             # FastAPI application + all endpoints
+│   └── main.py             # FastAPI app + endpoints + logic
 ├── static/
 │   └── index.html          # Single-page frontend
 ├── expenses.db             # SQLite database (gitignored)
+├── Dockerfile
+├── docker-compose.yml
+├── Caddyfile
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
 
-## API Endpoints (main ones)
+## Main API Endpoints
 
-| Method | Endpoint          | Description                          |
-|--------|-------------------|--------------------------------------|
-| POST   | `/expenses/`      | Create new expense                   |
-| GET    | `/expenses/`      | List all expenses                    |
-| GET    | `/system/`        | Current server resource statistics   |
-| GET    | `/health`         | Simple health check                  |
+| Method | Endpoint       | Description                          |
+|--------|----------------|--------------------------------------|
+| POST   | `/expenses/`   | Create a new expense                 |
+| GET    | `/expenses/`   | Get list of all expenses             |
+| GET    | `/system/`     | Current server resource statistics   |
+| GET    | `/health`      | Simple health check                  |
 
-Full interactive documentation available at `/docs` when server is running.
-
-## License
-
-MIT License
-
-Feel free to use, modify and distribute.
+Full interactive API documentation is available at `/docs` when the server is running.
