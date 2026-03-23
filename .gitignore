@@ -87,6 +87,7 @@ desktop.ini
 caddy_data/
 caddy_config/
 
+.venv
 *.db
 *.bak
 *.old
