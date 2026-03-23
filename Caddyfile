@@ -1,0 +1,23 @@
+{
+    auto_https off
+    log {
+        output stderr
+        level INFO
+    }
+}
+
+:80 {
+    log
+
+    handle_path /static* {
+        root * /app/static
+        file_server browse
+    }
+
+    handle {
+        root * /app/static
+        file_server /index.html
+    }
+
+    reverse_proxy backend:8000
+}
