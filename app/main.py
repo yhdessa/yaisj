@@ -1,17 +1,15 @@
-from fastapi.middleware.cors import CORSMiddleware
-import datetime
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, Float, String, Date
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import BaseModel, Field
-from datetime import date
+from datetime import date, datetime
 from typing import List, Dict, Any
 import psutil
 
 app = FastAPI(
     title="Expense Tracker + Server Monitor",
-    version="0.1.0",
 )
 
 app.add_middleware(
@@ -25,20 +23,18 @@ app.add_middleware(
 DATABASE_URL = "sqlite:///./expenses.db"
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} 
+    connect_args={"check_same_thread": False}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class Expense(Base):
     __tablename__ = "expenses"
-
     id = Column(Integer, primary_key=True, index=True)
     date = Column(Date, default=date.today, nullable=False)
     amount = Column(Float, nullable=False)
     category = Column(String(100), nullable=False)
     description = Column(String(500), nullable=True)
-
 
 Base.metadata.create_all(bind=engine)
 
@@ -82,7 +78,7 @@ def get_db():
     status_code=status.HTTP_201_CREATED,
     summary="Добавить новую трату"
 )
-def create_expense(expense: ExpenseCreate, db=Depends(get_db)):
+async def create_expense(expense: ExpenseCreate, db=Depends(get_db)):
     try:
         db_expense = Expense(**expense.model_dump())
         db.add(db_expense)
@@ -99,26 +95,27 @@ def create_expense(expense: ExpenseCreate, db=Depends(get_db)):
     response_model=List[ExpenseOut],
     summary="Получить все траты"
 )
-def read_expenses(skip: int = 0, limit: int = 100, db=Depends(get_db)):
+async def read_expenses(skip: int = 0, limit: int = 100, db=Depends(get_db)):
     return db.query(Expense).offset(skip).limit(limit).all()
+
 
 @app.get(
     "/system/",
     response_model=SystemStats,
     summary="Текущее состояние сервера (CPU, RAM, Disk, Network, top processes)"
 )
-def get_system_stats():
+async def get_system_stats():
     try:
         cpu = psutil.cpu_percent(interval=0.8)
 
         mem = psutil.virtual_memory()
         mem_total = round(mem.total / (1024**2), 1)      # MB
-        mem_used = round(mem.used / (1024**2), 1)
+        mem_used  = round(mem.used  / (1024**2), 1)
         mem_percent = mem.percent
 
         disk = psutil.disk_usage('/')
         disk_total = round(disk.total / (1024**3), 1)    # GB
-        disk_used = round(disk.used / (1024**3), 1)
+        disk_used  = round(disk.used  / (1024**3), 1)
         disk_percent = disk.percent
 
         net = psutil.net_io_counters()
@@ -142,7 +139,7 @@ def get_system_stats():
                 continue
 
         return {
-            "timestamp": date.today().isoformat() + " " + datetime.datetime.now().strftime("%H:%M:%S"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "cpu_percent": cpu,
             "memory_total_mb": mem_total,
             "memory_used_mb": mem_used,
@@ -159,6 +156,6 @@ def get_system_stats():
         raise HTTPException(status_code=500, detail=f"Error collecting stats: {str(e)}")
 
 
-@app.get("/health")
-def health_check():
+@app.get("/health", summary="Простой health-check")
+async def health_check():
     return {"status": "healthy", "service": "expense-tracker-vps"}
