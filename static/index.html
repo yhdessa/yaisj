@@ -16,7 +16,6 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
       <div class="lg:col-span-1">
@@ -58,6 +57,7 @@
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Сумма</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Категория</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Описание</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Действия</th>
                 </tr>
               </thead>
               <tbody id="expensesList" class="divide-y divide-gray-200"></tbody>
@@ -74,7 +74,7 @@
     </div>
 
     <div class="mt-8 bg-white rounded-xl shadow-md p-6 border border-gray-100">
-      <h2 class="text-xl font-semibold mb-4 text-gray-800">Состояние сервера 
+      <h2 class="text-xl font-semibold mb-4 text-gray-800">Состояние сервера
         <span class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full">обновляется каждые 5 сек</span>
       </h2>
       <div id="systemStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
@@ -97,16 +97,20 @@
         const tbody = document.getElementById('expensesList');
         tbody.innerHTML = '';
 
-        let total = 0;
         expenses.forEach(exp => {
-          total += exp.amount;
           const row = document.createElement('tr');
-          row.className = "hover:bg-gray-50 transition-colors";
+          row.className = 'hover:bg-gray-50 transition-colors';
           row.innerHTML = `
             <td class="px-4 py-4 text-sm">${exp.date}</td>
             <td class="px-4 py-4 font-medium">${exp.amount.toFixed(2)} ₽</td>
             <td class="px-4 py-4">${exp.category}</td>
             <td class="px-4 py-4 text-gray-600">${exp.description || '—'}</td>
+            <td class="px-4 py-4">
+              <button onclick="editExpense(${exp.id})" 
+                      class="text-blue-600 hover:text-blue-800 mr-3 text-lg">✏️</button>
+              <button onclick="deleteExpense(${exp.id})" 
+                      class="text-red-600 hover:text-red-800 text-lg">🗑</button>
+            </td>
           `;
           tbody.appendChild(row);
         });
@@ -168,7 +172,6 @@
 
     document.getElementById('expenseForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const amount = parseFloat(document.getElementById('amount').value);
       const category = document.getElementById('category').value.trim();
       const description = document.getElementById('description').value.trim();
@@ -185,12 +188,56 @@
         document.getElementById('amount').value = '';
         document.getElementById('category').value = '';
         document.getElementById('description').value = '';
-
         loadExpenses();
       } catch (err) {
         alert('Ошибка при добавлении: ' + err.message);
       }
     });
+
+    async function deleteExpense(id) {
+      if (!confirm('Вы действительно хотите удалить эту трату?')) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/expenses/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          loadExpenses();
+        } else {
+          alert('Ошибка при удалении');
+        }
+      } catch (err) {
+        alert('Ошибка соединения: ' + err.message);
+      }
+    }
+
+    async function editExpense(id) {
+      const newAmount = prompt('Новая сумма:');
+      if (newAmount === null) return;
+
+      const newCategory = prompt('Новая категория:');
+      if (newCategory === null) return;
+
+      const newDescription = prompt('Новое описание:') || '';
+
+      try {
+        const res = await fetch(`${API_BASE}/expenses/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: parseFloat(newAmount),
+            category: newCategory.trim(),
+            description: newDescription.trim()
+          })
+        });
+
+        if (res.ok) {
+          loadExpenses();
+        } else {
+          alert('Ошибка при редактировании');
+        }
+      } catch (err) {
+        alert('Ошибка соединения: ' + err.message);
+      }
+    }
 
     loadExpenses();
     loadSystemStats();
