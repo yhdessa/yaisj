@@ -157,7 +157,7 @@
           </div>
         `;
       } catch (err) {
-        console.error('Ошибка загрузки статистики:', err);
+        console.error('Ошибка загрузки статистики сервера:', err);
       }
     }
 
@@ -179,7 +179,6 @@
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        document.getElementById('amount').value = '';
         document.getElementById('category').value = '';
         document.getElementById('description').value = '';
         
@@ -188,11 +187,11 @@
         alert('Ошибка при добавлении: ' + err.message);
       }
     });
-
+    
     loadExpenses();
     loadSystemStats();
-    setInterval(loadSystemStats, 30000);
-  </script>
 
+    setInterval(loadSystemStats, 5000);
+</script>
 </body>
 </html>
