@@ -9,14 +9,14 @@
 :80 {
     log
 
-    handle_path /static* {
-        root * /app/static
-        file_server browse
-    }
-
     handle {
         root * /app/static
         file_server /index.html
+    }
+
+    handle_path /static* {
+        root * /app/static
+        file_server
     }
 
     reverse_proxy backend:8000
