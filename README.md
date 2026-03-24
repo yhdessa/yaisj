@@ -1,80 +1,75 @@
 # Expense Tracker VPS
 
-A simple, lightweight web application for tracking personal expenses with real-time server resource monitoring.
+A clean and lightweight personal expense tracking web application with real-time server monitoring.
 
-Record daily spending, categorize transactions, add notes, view totals, and keep an eye on your server's health — all in one modern interface.
+Track your daily spending, categorize expenses, view totals, and monitor your server's resources — all in one modern interface.
 
 ## Features
 
-- Add expenses with amount, category, and optional description
-- View complete list of recorded expenses
+- Add new expenses with amount, category, and description
+- View and manage all recorded expenses
 - Automatic total spending calculation
-- Real-time server stats (CPU, memory, disk usage, network I/O, top processes)
-- Responsive design — works great on desktop and mobile
-- Clean, modern UI with Tailwind CSS
-- Data stored locally in SQLite
+- Real-time server monitoring (CPU, Memory, Disk, Network, Top processes)
+- Auto-refreshing server stats every 5 seconds
+- Responsive and clean UI built with Tailwind CSS
+- Fully containerized with Docker and docker-compose
 
 ## Tech Stack
 
 - **Backend**: FastAPI (Python)
-- **Frontend**: HTML + Tailwind CSS + vanilla JavaScript
+- **Frontend**: HTML + Tailwind CSS + Vanilla JavaScript
 - **Database**: SQLite
 - **Containerization**: Docker + docker-compose
-- **Reverse proxy & auto-HTTPS**: Caddy
+- **Reverse Proxy**: Caddy
 - **Monitoring**: psutil
 
-## Quick Start
+## Quick Start (Recommended)
 
-### Recommended: Run with Docker
+### Using Docker (easiest way)
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/yhdessa/yaisj.git
 cd yaisj
 
-# 2. Start the application (builds and runs in background)
+# 2. Start the application
 docker compose up -d --build
 
-# 3. Open in your browser
+# 3. Open in browser
 http://localhost/
 ```
 
-- Main app: http://localhost/
-- API documentation (Swagger): http://localhost/docs
+**Available URLs:**
+- Main Application: http://localhost/
+- API Documentation (Swagger): http://localhost/docs
+- Health Check: http://localhost/health
 
-### Alternative: Run locally without Docker
+### Running Locally without Docker
 
 ```bash
-# 1. Clone the repo
 git clone https://github.com/yhdessa/yaisj.git
 cd yaisj
 
-# 2. Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-# 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Start the backend
 uvicorn app.main:app --reload --port 8000
-
-# 5. Open the frontend
-http://127.0.0.1:8000/static/index.html
-
-# API docs
-http://127.0.0.1:8000/docs
 ```
+
+Then open: http://127.0.0.1:8000/static/index.html
 
 ## Project Structure
 
 ```
 yaisj/
 ├── app/
-│   └── main.py             # FastAPI app + endpoints + logic
+│   └── main.py                 # FastAPI backend + endpoints
 ├── static/
-│   └── index.html          # Single-page frontend
-├── expenses.db             # SQLite database (gitignored)
+│   └── index.html              # Single-page frontend
+├── .env                        # Environment variables
+├── expenses.db                 # SQLite database (gitignored)
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Caddyfile
@@ -85,11 +80,19 @@ yaisj/
 
 ## Main API Endpoints
 
-| Method | Endpoint       | Description                          |
-|--------|----------------|--------------------------------------|
-| POST   | `/expenses/`   | Create a new expense                 |
-| GET    | `/expenses/`   | Get list of all expenses             |
-| GET    | `/system/`     | Current server resource statistics   |
-| GET    | `/health`      | Simple health check                  |
+| Method | Endpoint       | Description                              |
+|--------|----------------|------------------------------------------|
+| POST   | `/expenses/`   | Create a new expense                     |
+| GET    | `/expenses/`   | Get all expenses                         |
+| GET    | `/system/`     | Real-time server resource statistics     |
+| GET    | `/health`      | Health check endpoint                    |
 
-Full interactive API documentation is available at `/docs` when the server is running.
+Full interactive API documentation is available at `/docs`.
+
+## Environment Variables
+
+The project uses a `.env` file for configuration. You can customize:
+- `APP_TITLE`
+- `DEBUG`
+- `DOMAIN`
+- `EMAIL` (used for Let's Encrypt on production)
