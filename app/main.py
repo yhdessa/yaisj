@@ -155,7 +155,30 @@ async def get_system_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error collecting stats: {str(e)}")
 
+@app.delete("/expenses/{expense_id}", status_code=204)
+async def delete_expense(expense_id: int, db=Depends(get_db)):
+    expense = db.query(Expense).filter(Expense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    
+    db.delete(expense)
+    db.commit()
+    return None
+    
+@app.put("/expenses/{expense_id}", response_model=ExpenseOut)
+async def update_expense(expense_id: int, updated: ExpenseCreate, db=Depends(get_db)):
+    expense = db.query(Expense).filter(Expense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    
+    expense.amount = updated.amount
+    expense.category = updated.category
+    expense.description = updated.description
+    
+    db.commit()
+    db.refresh(expense)
+    return expense
 
-@app.get("/health", summary="Простой health-check")
+@app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "expense-tracker-vps"}
