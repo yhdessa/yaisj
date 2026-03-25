@@ -29,7 +29,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-              <input type="text" id="category" required placeholder="Еда, Транспорт, Развлечения..."
+              <input type="text" id="category" required placeholder="Еда, Транспорт..."
                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-indigo-500">
             </div>
             <div>
@@ -46,6 +46,18 @@
       </div>
 
       <div class="lg:col-span-2 space-y-6">
+
+        <div class="bg-white rounded-xl shadow-md p-4 flex flex-wrap gap-3">
+          <input type="text" id="searchInput" placeholder="Поиск по описанию..."
+                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500">
+          <select id="categoryFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500">
+            <option value="">Все категории</option>
+          </select>
+          <button onclick="clearFilters()" 
+                  class="px-5 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition">
+            Сбросить
+          </button>
+        </div>
 
         <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
           <h2 class="text-xl font-semibold mb-4 text-gray-800">Все расходы</h2>
@@ -74,7 +86,7 @@
     </div>
 
     <div class="mt-8 bg-white rounded-xl shadow-md p-6 border border-gray-100">
-      <h2 class="text-xl font-semibold mb-4 text-gray-800">Состояние сервера
+      <h2 class="text-xl font-semibold mb-4 text-gray-800">Состояние сервера 
         <span class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full">обновляется каждые 5 сек</span>
       </h2>
       <div id="systemStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
@@ -90,9 +102,21 @@
     const API_BASE = '';
 
     async function loadExpenses() {
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const categoryFilter = document.getElementById('categoryFilter').value;
+
       try {
         const res = await fetch(`${API_BASE}/expenses/`);
-        const expenses = await res.json();
+        let expenses = await res.json();
+
+        if (categoryFilter) {
+          expenses = expenses.filter(exp => exp.category === categoryFilter);
+        }
+        if (search) {
+          expenses = expenses.filter(exp => 
+            exp.description && exp.description.toLowerCase().includes(search)
+          );
+        }
 
         const tbody = document.getElementById('expensesList');
         tbody.innerHTML = '';
@@ -106,18 +130,38 @@
             <td class="px-4 py-4">${exp.category}</td>
             <td class="px-4 py-4 text-gray-600">${exp.description || '—'}</td>
             <td class="px-4 py-4">
-              <button onclick="editExpense(${exp.id})" 
-                      class="text-blue-600 hover:text-blue-800 mr-3 text-lg">✏️</button>
-              <button onclick="deleteExpense(${exp.id})" 
-                      class="text-red-600 hover:text-red-800 text-lg">🗑</button>
+              <button onclick="editExpense(${exp.id})" class="text-blue-600 hover:text-blue-800 mr-4 text-lg">✏️</button>
+              <button onclick="deleteExpense(${exp.id})" class="text-red-600 hover:text-red-800 text-lg">🗑</button>
             </td>
           `;
           tbody.appendChild(row);
         });
 
+        updateCategoryFilter(expenses);
         updateCategorySummary(expenses);
+
       } catch (err) {
         console.error('Ошибка загрузки расходов:', err);
+      }
+    }
+
+    function updateCategoryFilter(expenses) {
+      const select = document.getElementById('categoryFilter');
+      const currentValue = select.value;
+
+      const categories = [...new Set(expenses.map(exp => exp.category))].sort();
+
+      select.innerHTML = '<option value="">Все категории</option>';
+
+      categories.forEach(cat => {//
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+      });
+
+      if (categories.includes(currentValue)) {
+        select.value = currentValue;
       }
     }
 
@@ -145,7 +189,6 @@
       try {
         const res = await fetch(`${API_BASE}/system/`);
         const data = await res.json();
-
         const container = document.getElementById('systemStats');
         container.innerHTML = `
           <div class="bg-indigo-50 p-5 rounded-xl">
@@ -195,49 +238,39 @@
     });
 
     async function deleteExpense(id) {
-      if (!confirm('Вы действительно хотите удалить эту трату?')) return;
-
-      try {
-        const res = await fetch(`${API_BASE}/expenses/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          loadExpenses();
-        } else {
-          alert('Ошибка при удалении');
-        }
-      } catch (err) {
-        alert('Ошибка соединения: ' + err.message);
-      }
+      if (!confirm('Удалить эту трату?')) return;
+      const res = await fetch(`${API_BASE}/expenses/${id}`, { method: 'DELETE' });
+      if (res.ok) loadExpenses();
     }
 
     async function editExpense(id) {
       const newAmount = prompt('Новая сумма:');
       if (newAmount === null) return;
-
       const newCategory = prompt('Новая категория:');
       if (newCategory === null) return;
-
       const newDescription = prompt('Новое описание:') || '';
 
-      try {
-        const res = await fetch(`${API_BASE}/expenses/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: parseFloat(newAmount),
-            category: newCategory.trim(),
-            description: newDescription.trim()
-          })
-        });
+      const res = await fetch(`${API_BASE}/expenses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: parseFloat(newAmount),
+          category: newCategory.trim(),
+          description: newDescription.trim()
+        })
+      });
 
-        if (res.ok) {
-          loadExpenses();
-        } else {
-          alert('Ошибка при редактировании');
-        }
-      } catch (err) {
-        alert('Ошибка соединения: ' + err.message);
-      }
+      if (res.ok) loadExpenses();
     }
+
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('categoryFilter').value = '';
+      loadExpenses();
+    }
+
+    document.getElementById('searchInput').addEventListener('input', loadExpenses);
+    document.getElementById('categoryFilter').addEventListener('change', loadExpenses);
 
     loadExpenses();
     loadSystemStats();
