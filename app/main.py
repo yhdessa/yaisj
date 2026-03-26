@@ -12,12 +12,9 @@ import psutil
 from .logger import logger
 
 app = FastAPI(
-    title="Expense Tracker VPS",
-    description="Personal expense tracker with real-time server monitoring",
-    version="0.2.0",
+    title="Expense Tracker VPS"
 )
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -26,7 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Логирование всех HTTP-запросов
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     response = await call_next(request)
@@ -40,7 +36,6 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-# ====================== Database ======================
 DATABASE_URL = "sqlite:///./expenses.db"
 engine = create_engine(
     DATABASE_URL,
@@ -62,7 +57,6 @@ class Expense(Base):
 Base.metadata.create_all(bind=engine)
 
 
-# ====================== Pydantic Models ======================
 class ExpenseCreate(BaseModel):
     amount: float = Field(..., gt=0)
     category: str = Field(..., min_length=1, max_length=100)
@@ -77,7 +71,6 @@ class ExpenseOut(ExpenseCreate):
         from_attributes = True
 
 
-# ====================== DB Dependency ======================
 def get_db():
     db = SessionLocal()
     try:
@@ -86,7 +79,6 @@ def get_db():
         db.close()
 
 
-# ====================== Endpoints ======================
 
 @app.post("/expenses/", response_model=ExpenseOut, status_code=201)
 async def create_expense(expense: ExpenseCreate, db=Depends(get_db)):
