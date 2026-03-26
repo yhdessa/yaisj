@@ -2,14 +2,14 @@
     auto_https off
     log {
         output stderr
-        level INFO
+        level DEBUG
     }
 }
 
 :80 {
     log
 
-    handle {
+    handle / {
         root * /app/static
         file_server /index.html
     }
